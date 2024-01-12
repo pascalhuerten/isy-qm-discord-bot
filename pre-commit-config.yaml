@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: update-version-and-commits
+        name: Update version and commits
+        language: script
+        entry: scripts/update_version_and_commits.sh
+        pass_filenames: false
