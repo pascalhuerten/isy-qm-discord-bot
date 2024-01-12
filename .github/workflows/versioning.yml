@@ -7,9 +7,28 @@ on:
       - main
 
 jobs:
-  update:
+  check_author:
     runs-on: ubuntu-latest
-    if: github.actor != 'github-actions[bot]'
+    outputs:
+      is_action: ${{ steps.check.outputs.is_action }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Check last commit author
+        id: check
+        run: |
+          LAST_COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
+          if [ "$LAST_COMMIT_AUTHOR" = "GitHub Action" ]; then
+            echo "::set-output name=is_action::true"
+          else
+            echo "::set-output name=is_action::false"
+          fi
+  
+  update:
+    needs: check_author
+    if: needs.check_author.outputs.is_action == 'false'
+    runs-on: ubuntu-latest
     steps:
       # Checkout the repository
       - name: Checkout repository
@@ -59,9 +78,9 @@ jobs:
           LAST_VERSION_SHORT_HASH=$(echo $LAST_VERSION | cut -d'-' -f1)
           LAST_VERSION_COMMIT=$(git rev-list -n 1 $LAST_VERSION_SHORT_HASH 2>/dev/null || echo "")
           if [ -z "$LAST_VERSION_COMMIT" ]; then
-            git log --pretty=format:'## Version: $VERSION%n### %s%n%b' >> commits.md
+            git log --pretty=format:"## Version: $VERSION%n### %s%n%b" >> commits.md
           else
-            git log --pretty=format:'## Version: $VERSION%n### %s%n%b' $LAST_VERSION_COMMIT..HEAD >> commits.md
+            git log --pretty=format:"## Version: $VERSION%n### %s%n%b" $LAST_VERSION_COMMIT..HEAD >> commits.md
           fi
 
       # If there are changes, commit and push the changes
