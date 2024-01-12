@@ -9,31 +9,29 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
-
+    if: github.actor != 'github-actions[bot]'
     steps:
       # Checkout the repository
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2  
         with:
-          token: ${{ secrets.GH_PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       # Create version.txt if it doesn't exist
       - name: Create version file
         run: |
           if [[ ! -f version.txt ]]; then
-            echo "Version: " > version.txt
+            echo "Version: 000000-00000000" > version.txt
           fi
 
-      # Create commits.md if it doesn't exist
-      - name: Create commits file
+      # Get the last version number from the version.txt file
+      - name: Get last version
         run: |
-          if [[ ! -f commits.md ]]; then
-            touch commits.md
-          fi
-
+          echo "LAST_VERSION=$(cat version.txt | grep -oP '(?<=Version: ).*')" >> $GITHUB_ENV
+      
       # Get the short commit hash of the latest commit
       - name: Get short commit hash
-        run: echo "HASH=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_ENV
+        run: echo "HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       # Get the current date in the format YYYYMMDD
       - name: Get current date
@@ -42,23 +40,29 @@ jobs:
       # Generate a version number using the commit hash and the current date
       - name: Generate version number
         run: echo "VERSION=${HASH}-${DATE}" >> $GITHUB_ENV
-
-      # Get the last version number from the version.txt file
-      - name: Get last version
+      
+      # Update the version.txt file with the new version number
+      - name: Update version file
         run: |
-          echo "LAST_VERSION=$(cat version.txt | grep -oP '(?<=Version: ).*')" >> $GITHUB_ENV
+          echo "Version: $VERSION" > version.txt
 
+      # Create commits.md if it doesn't exist
+      - name: Create commits file
+        run: |
+          if [[ ! -f commits.md ]]; then
+            touch commits.md
+          fi
+      
       # Update the markdown file with the commit log since the last version
       - name: Update markdown file
         run: |
           LAST_VERSION_SHORT_HASH=$(echo $LAST_VERSION | cut -d'-' -f1)
           LAST_VERSION_COMMIT=$(git rev-list -n 1 $LAST_VERSION_SHORT_HASH 2>/dev/null || echo "")
-          git log --pretty=format:'## Version: $VERSION%n### %s%n%b' $LAST_VERSION_COMMIT..HEAD >> commits.md
-
-      # Update the version.txt file with the new version number
-      - name: Update version file
-        run: |
-          echo "Version: $VERSION" > version.txt
+          if [ -z "$LAST_VERSION_COMMIT" ]; then
+            git log --pretty=format:'## Version: $VERSION%n### %s%n%b' >> commits.md
+          else
+            git log --pretty=format:'## Version: $VERSION%n### %s%n%b' $LAST_VERSION_COMMIT..HEAD >> commits.md
+          fi
 
       # If there are changes, commit and push the changes
       - name: Commit and push
