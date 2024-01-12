@@ -22,6 +22,8 @@ VERSION="$COMMIT-$DATE"
 
 # Update the version.txt file with the new version number
 echo "Version: $VERSION" > version.txt
+# Add the version.txt file to the git index
+git add version.txt
 
 # Get the last version commit hash from the last version number
 LAST_VERSION_SHORT_HASH=$(echo $LAST_VERSION | cut -d'-' -f1)
@@ -41,3 +43,6 @@ else
     # Update the commits.md file with the commit log since the last version
     git log --pretty=format:'## Version: $VERSION%n### %s%n%b' $LAST_VERSION_COMMIT..HEAD >> commits.md
 fi
+
+# Add the commits.md file to the git index
+git add commits.md
