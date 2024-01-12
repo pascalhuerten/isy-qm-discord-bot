@@ -31,47 +31,38 @@ jobs:
 
       # Get the short commit hash of the latest commit
       - name: Get short commit hash
-        id: hash
-        run: echo "::set-output name=hash::$(git rev-parse --short ${{ github.sha }})"
+        run: echo "HASH=$(git rev-parse --short ${{ github.sha }})" >> $GITHUB_ENV
 
       # Get the current date in the format YYYYMMDD
       - name: Get current date
-        id: date
-        run: echo "::set-output name=date::$(date +'%Y%m%d')"
+        run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
       # Generate a version number using the commit hash and the current date
       - name: Generate version number
-        id: version
-        run: echo "::set-output name=version::${{ steps.hash.outputs.hash }}-${{ steps.date.outputs.date }}"
+        run: echo "VERSION=${HASH}-${DATE}" >> $GITHUB_ENV
 
       # Get the last version number from the version.txt file
       - name: Get last version
-        id: last_version
         run: |
-          echo "::set-output name=version::$(cat version.txt | grep -oP '(?<=Version: ).*')"
+          echo "LAST_VERSION=$(cat version.txt | grep -oP '(?<=Version: ).*')" >> $GITHUB_ENV
 
       # Update the markdown file with the commit log since the last version
       - name: Update markdown file
         run: |
-          LAST_VERSION_SHORT_HASH=$(echo ${{ steps.last_version.outputs.version }} | cut -d'-' -f1)
+          LAST_VERSION_SHORT_HASH=$(echo $LAST_VERSION | cut -d'-' -f1)
           LAST_VERSION_COMMIT=$(git rev-list -n 1 $LAST_VERSION_SHORT_HASH 2>/dev/null || echo "")
-          git log --pretty=format:'## Version: ${{ steps.version.outputs.version }}%n### %s%n%b' $LAST_VERSION_COMMIT..HEAD >> commits.md
+          git log --pretty=format:'## Version: $VERSION%n### %s%n%b' $LAST_VERSION_COMMIT..HEAD >> commits.md
 
       # Update the version.txt file with the new version number
       - name: Update version file
-        run: 'echo "Version: ${{ steps.version.outputs.version }}" > version.txt'
-
-      # Check if there are any changes in the version.txt and commits.md files
-      - name: Check for changes
-        id: check
-        run: echo "::set-output name=changed::$(git diff --exit-code || echo true)"
+        run: |
+          echo "Version: $VERSION" > version.txt
 
       # If there are changes, commit and push the changes
       - name: Commit and push
-        if: steps.check.outputs.changed == 'true'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add version.txt commits.md
-          git commit -m "Update version to ${{ steps.version.outputs.version }}"
+          git commit -m "Update version to $VERSION"
           git push
