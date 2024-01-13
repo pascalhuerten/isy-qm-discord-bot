@@ -12,7 +12,7 @@ jobs:
     outputs:
       is_action: ${{ steps.check.outputs.is_action }}
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v2
 
       - name: Check last commit author
@@ -20,11 +20,11 @@ jobs:
         run: |
           LAST_COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
           if [ "$LAST_COMMIT_AUTHOR" = "GitHub Action" ]; then
-            echo "is_action=true" >> $GITHUB_ENV
+            echo "is_action=true" >> $GITHUB_OUTPUT
           else
-            echo "is_action=false" >> $GITHUB_ENV
+            echo "is_action=false" >> $GITHUB_OUTPUT
           fi
-  
+
   update:
     needs: check_author
     if: needs.check_author.outputs.is_action == 'false'
@@ -41,44 +41,42 @@ jobs:
 
       # Create version.txt if it doesn't exist
       - name: Create version file
+        id: create-version
         run: |
           if [[ ! -f version.txt ]]; then
             echo "Version: 000000-00000000" > version.txt
           fi
 
-      # Get the last version number from the version.txt file
       - name: Get last version
+        id: get-last-version
         run: |
-          echo "LAST_VERSION=$(cat version.txt | grep -oP '(?<=Version: ).*')" >> $GITHUB_ENV
-      
-      # Get the short commit hash of the latest commit
+          echo "LAST_VERSION=$(cat version.txt | grep -oP '(?<=Version: ).*')" >> "$GITHUB_OUTPUT"
+
       - name: Get short commit hash
-        run: echo "HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+        id: get-short-commit-hash
+        run: echo "HASH=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
-      # Get the current date in the format YYYYMMDD
       - name: Get current date
-        run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+        id: get-current-date
+        run: echo "DATE=$(date +'%Y%m%d')" >> "$GITHUB_OUTPUT"
 
-      # Generate a version number using the commit hash and the current date
       - name: Generate version number
-        run: echo "VERSION=${HASH}-${DATE}" >> $GITHUB_ENV
-      
-      # Update the version.txt file with the new version number
+        id: generate-version-number
+        run: echo "VERSION=${{ steps.get-short-commit-hash.outputs.HASH }}-${{ steps.get-current-date.outputs.DATE }}" >> "$GITHUB_OUTPUT"
+
       - name: Update version file
         run: |
-          echo "Version: $VERSION" > version.txt
+          echo "Version: ${{ steps.generate-version-number.outputs.VERSION }}" > version.txt
 
-      # Create commits.md if it doesn't exist
       - name: Create commits file
         run: |
           if [[ ! -f commits.md ]]; then
             echo -e "# Commit history\n" > commits.md
           fi
-      
-      # Update the markdown file with the commit log since the last version
+
       - name: Update markdown file
         run: |
-          LAST_VERSION_SHORT_HASH=$(echo $LAST_VERSION | cut -d'-' -f1)
+          LAST_VERSION_SHORT_HASH=$(echo ${{ steps.get-last-version.outputs.LAST_VERSION }} | cut -d'-' -f1)
           LAST_VERSION_COMMIT=$(git rev-list -n 1 $LAST_VERSION_SHORT_HASH 2>/dev/null || echo "")
           echo "LAST_VERSION_COMMIT: $LAST_VERSION_COMMIT"
           echo "All commits:"
@@ -89,18 +87,17 @@ jobs:
             REPO_URL=${REPO_URL#*:}
             REPO_URL="https://github.com/$REPO_URL"
           fi
-          COMMIT_TEMPLATE="## %s%n%n> Version: [$VERSION]($REPO_URL/commit/%H)%n%n%b"
+          COMMIT_TEMPLATE="## %s%n%n> Version: [${{ steps.generate-version-number.outputs.VERSION }}]($REPO_URL/commit/%H)%n%n%b"
           if [ -z "$LAST_VERSION_COMMIT" ]; then
             git log --pretty=format:"$COMMIT_TEMPLATE" >> commits.md
           else
             git log --pretty=format:"$COMMIT_TEMPLATE" $LAST_VERSION_COMMIT..HEAD >> commits.md
           fi
 
-      # If there are changes, commit and push the changes
       - name: Commit and push
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add version.txt commits.md
-          git commit -m "Update version to $VERSION"
+          git commit -m "Update version to ${{ steps.generate-version-number.outputs.VERSION }}"
           git push
