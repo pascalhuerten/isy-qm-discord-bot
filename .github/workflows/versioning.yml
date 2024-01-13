@@ -72,7 +72,7 @@ jobs:
       - name: Create commits file
         run: |
           if [[ ! -f commits.md ]]; then
-            echo "# Commit history" > commits.md
+            echo -e "# Commit history\n" > commits.md
           fi
       
       # Update the markdown file with the commit log since the last version
