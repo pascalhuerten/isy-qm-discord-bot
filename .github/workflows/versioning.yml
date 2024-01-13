@@ -83,10 +83,11 @@ jobs:
             REPO_URL=${REPO_URL#*:}
             REPO_URL="https://github.com/$REPO_URL"
           fi
+          COMMIT_TEMPLATE="# %s%n> Version: [$VERSION]($REPO_URL/commit/%H)%n%b"
           if [ -z "$LAST_VERSION_COMMIT" ]; then
-            git log --pretty=format:"### %s%nVersion: $VERSION - [View Commit]($REPO_URL/commit/%H)%n%b" >> commits.md
+            git log --pretty=format:"$COMMIT_TEMPLATE" >> commits.md
           else
-            git log --pretty=format:"### %s%nVersion: $VERSION - [View Commit]($REPO_URL/commit/%H)%n%b" $LAST_VERSION_COMMIT..HEAD >> commits.md
+            git log --pretty=format:"$COMMIT_TEMPLATE" $LAST_VERSION_COMMIT..HEAD >> commits.md
           fi
 
       # If there are changes, commit and push the changes
