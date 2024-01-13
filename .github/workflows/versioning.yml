@@ -98,8 +98,8 @@ jobs:
           # Step 3: Remove lines between ---BEGIN--- and ---END---
           awk '/---BEGIN---/{flag=1; next} /---END---/{flag=0} !flag' marked_commits.md > filtered_commits.md
 
-          # Step 4: Remove lines containing ---END---
-          sed -i '/---END---/d' filtered_commits.md
+          # Step 4: Remove lines starting with ---END---
+          sed -i '/^---END---/d' filtered_commits.md
 
           # Step 5: Remove extra empty lines and append to commits.md
           sed '/^$/N;/^\n$/D' filtered_commits.md >> commits.md
