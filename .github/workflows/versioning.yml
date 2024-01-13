@@ -101,8 +101,11 @@ jobs:
           # Step 4: Remove lines starting with ---END---
           sed -i '/^---END---/d' filtered_commits.md
 
-          # Step 5: Remove extra empty lines, ensure one empty line at the end, and append to commits.md
-          awk 'NF {if (p) print p; p=$0} END {print p}' filtered_commits.md > commits.md && echo >> commits.md
+          # Step 5: Remove extra empty lines and append to commits.md
+          sed '/^$/N;/^\n$/D' filtered_commits.md >> commits.md
+
+          # Step 6: Remove trailing empty line
+          sed -i '$ d' commits.md
 
       - name: Commit and push
         run: |
