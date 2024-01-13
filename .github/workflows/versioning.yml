@@ -101,8 +101,8 @@ jobs:
           # Step 4: Remove lines starting with ---END---
           sed -i '/^---END---/d' filtered_commits.md
 
-          # Step 5: Remove extra empty lines and append to commits.md
-          sed '/^$/N;/^\n$/D' filtered_commits.md >> commits.md
+          # Step 5: Remove extra empty lines, ensure one empty line at the end, and append to commits.md
+          perl -00 -pe 's/\n{3,}/\n\n/g; s/\n*$/\n/' filtered_commits.md >> commits.md
 
       - name: Commit and push
         run: |
