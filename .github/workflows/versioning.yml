@@ -95,8 +95,11 @@ jobs:
           # Step 2: Exclude undesired commits and remove extra ---END--- lines
           awk -v RS="---END---\n" -v ORS="" '{if (!/Merge branch|Update version to/) {if (NR > 1) print "---END---\n"; print $0}}' raw_commits.md > filtered_commits.md
 
-          # Step 3: Remove extra empty lines
-          sed '/^$/N;/^\n$/D' filtered_commits.md > commits.md
+          # Step 3: Remove trailing ---END---
+          sed -i '$d' filtered_commits.md
+
+          # Step 4: Remove extra empty lines and append to commits.md
+          sed '/^$/N;/^\n$/D' filtered_commits.md >> commits.md
 
       - name: Commit and push
         run: |
