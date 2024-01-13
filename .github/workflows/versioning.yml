@@ -86,9 +86,9 @@ jobs:
           fi
           COMMIT_TEMPLATE="## %s%n%n> Version: [${{ steps.generate-version-number.outputs.VERSION }}]($REPO_URL/commit/%H)%n%n%b"
           if [ -z "$LAST_VERSION_COMMIT" ]; then
-            git log --pretty=format:"$COMMIT_TEMPLATE" --reverse --author='^GitHub Action' >> commits.md
+            git log --pretty=format:"$COMMIT_TEMPLATE" --reverse | grep -v 'Update version to' >> commits.md
           else
-            git log --pretty=format:"$COMMIT_TEMPLATE" --reverse --author='^GitHub Action' $LAST_VERSION_COMMIT..HEAD >> commits.md
+            git log --pretty=format:"$COMMIT_TEMPLATE" --reverse $LAST_VERSION_COMMIT..HEAD | grep -v 'Update version to' >> commits.md
           fi
 
       - name: Commit and push
