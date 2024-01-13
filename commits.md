@@ -202,3 +202,8 @@
 
 > Version: [dc8c805-20240113](https://github.com/pascalhuerten/isy-qm-discord-bot/commit/dc8c805b973dbb16167c59cfeff9de077fc77962)
 
+
+## Fix filtering of lines starting with ---END--- in versioning workflow
+
+> Version: [e7c2a12-20240113](https://github.com/pascalhuerten/isy-qm-discord-bot/commit/e7c2a12b02ad3aa5d845b955b92add857f9b8fc8)
+
