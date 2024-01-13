@@ -87,16 +87,16 @@ jobs:
           COMMIT_TEMPLATE="## %s%n%n> Version: [${{ steps.generate-version-number.outputs.VERSION }}]($REPO_URL/commit/%H)%n%n%b"
           # Step 1: Generate the commit log
           if [ -z "$LAST_VERSION_COMMIT" ]; then
-              git log --pretty=format:"$COMMIT_TEMPLATE%n---END---" --reverse > raw_commits.md
+            git log --pretty=format:"$COMMIT_TEMPLATE%n---END---" --reverse > raw_commits.md
           else
-              git log --pretty=format:"$COMMIT_TEMPLATE%n---END---" --reverse $LAST_VERSION_COMMIT..HEAD > raw_commits.md
+            git log --pretty=format:"$COMMIT_TEMPLATE%n---END---" --reverse $LAST_VERSION_COMMIT..HEAD > raw_commits.md
           fi
 
           # Step 2: Exclude undesired commits and remove extra ---END--- lines
           awk -v RS="---END---\n" -v ORS="" '{if (!/Merge branch|Update version to/) {if (NR > 1) print "---END---\n"; print $0}}' raw_commits.md > filtered_commits.md
 
           # Step 3: Remove trailing ---END---
-          sed -i ':a;N;$!ba;s/---END---\n$//g' filtered_commits.md
+          perl -pi -e 's/---END---\n\Z//' filtered_commits.md
 
           # Step 4: Remove extra empty lines and append to commits.md
           sed '/^$/N;/^\n$/D' filtered_commits.md >> commits.md
