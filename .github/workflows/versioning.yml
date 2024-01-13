@@ -92,11 +92,11 @@ jobs:
             git log --pretty=format:"$COMMIT_TEMPLATE%n---END---" --reverse $LAST_VERSION_COMMIT..HEAD > raw_commits.md
           fi
 
-          # Step 2: Exclude undesired commits and remove extra ---END--- lines
-          awk -v RS="---END---\n" '{if (!/Merge branch|Update version to/) print $0 "---END---\n"}' raw_commits.md > filtered_commits.md
+          # Step 2: Mark undesired commits with ---BEGIN--- and ---END---
+          awk -v RS="---END---\n" '{if (/Merge branch|Update version to/) print "---BEGIN---\n" $0 "---END---\n"; else print $0 "---END---\n"}' raw_commits.md > marked_commits.md
 
-          # Step 3: Remove lines containing ---END---
-          sed -i '/---END---/d' filtered_commits.md
+          # Step 3: Remove lines between ---BEGIN--- and ---END---
+          awk '/---BEGIN---/{flag=1; next} /---END---/{flag=0} !flag' marked_commits.md > filtered_commits.md
 
           # Step 4: Remove extra empty lines and append to commits.md
           sed '/^$/N;/^\n$/D' filtered_commits.md >> commits.md
