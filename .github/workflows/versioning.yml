@@ -96,7 +96,7 @@ jobs:
           awk -v RS="---END---\n" -v ORS="" '{if (!/Merge branch|Update version to/) {if (NR > 1) print "---END---\n"; print $0}}' raw_commits.md > filtered_commits.md
 
           # Step 3: Remove trailing ---END---
-          sed -i '$d' filtered_commits.md
+          sed -i ':a;N;$!ba;s/---END---\n$//g' filtered_commits.md
 
           # Step 4: Remove extra empty lines and append to commits.md
           sed '/^$/N;/^\n$/D' filtered_commits.md >> commits.md
