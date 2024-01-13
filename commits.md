@@ -61,3 +61,5 @@
 
 > Version: [f1b0d3b-20240113](https://github.com/pascalhuerten/isy-qm-discord-bot/commit/f1b0d3b9c1ab34db0ab18f075a41a81ff9e94117)
 
+## Use perl to make sure that file ends with exactly one empty line
+> Version: [9c4c57b-20240113](https://github.com/pascalhuerten/isy-qm-discord-bot/commit/9c4c57b6273dcf6028642beaf1faf931d90b377f)
