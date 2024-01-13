@@ -5,13 +5,14 @@
 > Version: [3e1e74f-20240113](https://github.com/pascalhuerten/isy-qm-discord-bot/commit/3e1e74fbdf7150d0623a0824e853c03b41723c69)
 
 ### Heading 3
+
 #### Heading 4
 
 * item 1
 * item 2
 
-- [x] TODO 1
-- [ ] TODO 2
+* [x] TODO 1
+* [ ] TODO 2
 
 ## reset version and commit files
 
@@ -38,19 +39,21 @@
 > Version: [3e1e74f-20240113](https://github.com/pascalhuerten/isy-qm-discord-bot/commit/1a296663c74ce682e50fc09fd029a3d4b6ee747a)
 
 ### Heading 3
+
 #### Heading 4
 
 * item 1
 * item 2
 
-- [x] TODO 1
-- [ ] TODO 2
+* [x] TODO 1
+* [ ] TODO 2
 
 ## Delete unnecessary commit history and update commit template
 
 > Version: [3e1e74f-20240113](https://github.com/pascalhuerten/isy-qm-discord-bot/commit/81750dd58e11b4d073ff1f33b45e34042e7c7778)
 
 ### Heading 3
+
 #### Heading 4
 
 * item 1
@@ -73,8 +76,6 @@
 
 > Version: [3e1e74f-20240113](https://github.com/pascalhuerten/isy-qm-discord-bot/commit/cf392d33612386cdc72f3ee11cd1c2929e451bd7)
 
-# Heading1
-## Heading 2
 ### Heading 3
 #### Heading 4
 
@@ -88,8 +89,6 @@
 
 > Version: [3e1e74f-20240113](https://github.com/pascalhuerten/isy-qm-discord-bot/commit/63427ffcc551bff221216d7f61e3ad2f9711b00a)
 
-# Heading1
-## Heading 2
 ### Heading 3
 #### Heading 4
 
@@ -113,8 +112,6 @@
 
 > Version: [3e1e74f-20240113](https://github.com/pascalhuerten/isy-qm-discord-bot/commit/6d82a8e57f45ccf949e71f7618f0c5729b297345)
 
-# Heading1
-## Heading 2
 ### Heading 3
 #### Heading 4
 
