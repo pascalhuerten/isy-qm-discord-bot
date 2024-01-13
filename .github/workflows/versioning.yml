@@ -20,9 +20,9 @@ jobs:
         run: |
           LAST_COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
           if [ "$LAST_COMMIT_AUTHOR" = "GitHub Action" ]; then
-            echo "::set-output name=is_action::true"
+            echo "is_action=true" >> $GITHUB_ENV
           else
-            echo "::set-output name=is_action::false"
+            echo "is_action=false" >> $GITHUB_ENV
           fi
   
   update:
@@ -34,6 +34,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2  
         with:
+          # Fetch all history to get access to all commits
+          fetch-depth: 0
+          # PAT is required to push changes back to the repository
           token: ${{ secrets.GH_PAT }}
 
       # Create version.txt if it doesn't exist
