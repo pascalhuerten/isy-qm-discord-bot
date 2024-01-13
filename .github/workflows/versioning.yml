@@ -69,7 +69,7 @@ jobs:
       - name: Create commits file
         run: |
           if [[ ! -f commits.md ]]; then
-            touch commits.md
+            echo "# Commit history%n" > commits.md
           fi
       
       # Update the markdown file with the commit log since the last version
@@ -83,7 +83,7 @@ jobs:
             REPO_URL=${REPO_URL#*:}
             REPO_URL="https://github.com/$REPO_URL"
           fi
-          COMMIT_TEMPLATE="# %s%n> Version: [$VERSION]($REPO_URL/commit/%H)%n%b"
+          COMMIT_TEMPLATE="## %s%n%n> Version: [$VERSION]($REPO_URL/commit/%H)%n%n%b"
           if [ -z "$LAST_VERSION_COMMIT" ]; then
             git log --pretty=format:"$COMMIT_TEMPLATE" >> commits.md
           else
