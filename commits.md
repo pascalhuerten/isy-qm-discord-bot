@@ -437,3 +437,7 @@
 
 > Version: [3e1e74f-20240113](https://github.com/pascalhuerten/isy-qm-discord-bot/commit/ca1b2a72be82f95fb4d78bf814e6d6d7928dc8d4)
 
+## Update version to 6a97c4e-20240113
+
+> Version: [1988efc-20240113](https://github.com/pascalhuerten/isy-qm-discord-bot/commit/8f4c0266148901f7b860b5238aeb34e70e0a966f)
+
