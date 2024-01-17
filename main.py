@@ -2,6 +2,7 @@ from os import getenv
 import openai
 import discord
 from dotenv import load_dotenv
+from collections import defaultdict
 
 load_dotenv()
 
@@ -18,8 +19,12 @@ intents.message_content = True
 
 client = discord.Client(intents=intents)
 
-PREFIX = ">>"  # set any prefix you want
+# Create a dictionary to store conversation history for each channel
+conversations = defaultdict(list)
+# Create a dictionary to store citations for each channel
+citations_dict = defaultdict(list)
 
+MAX_HISTORY = 4 # Maximum number of messages to keep in the history
 
 @client.event
 async def on_ready():
@@ -34,68 +39,98 @@ async def on_message(message: discord.Message):
     """
     Listen to message event
     """
-    # ignore messages from the bot itself and messages that don't start with the prefix we have set
-    if message.author == client.user or not not message.content.startswith(PREFIX):
+    # ignore messages from the bot itself
+    if message.author == client.user:
         return
 
     await chat(message)
 
 
+async def send(dm: discord.Message, message: str):
+    """
+    Send the assistant's response to the channel
+    """
+    # Send the assistant's response to the channel
+    message_parts = [message[i:i+2000] for i in range(0, len(message), 2000)]
+
+    for part in message_parts:
+        await dm.channel.send(part)
+
+
 async def chat(dm: discord.Message):
     text = dm.content
 
-    thread = openai_client.beta.threads.create()
+    # If the user's message starts with "/cite", send the corresponding citation
+    if text.startswith("/cite"):
+        try:
+            index = int(text.split(" ", 1)[1])  # Get the index from the user's message
+            citation = citations_dict[dm.channel.id][index]  # Get the corresponding citation
+            await send(dm, citation)  # Send the citation
+            return
+        except (IndexError, ValueError):
+            await send(dm, "Invalid citation index.")
+            return
 
-    message = openai_client.beta.threads.messages.create(
-        thread_id=thread.id,
-        role="user",
-        content=text,
+    # Add the user's message to the conversation history
+    conversations[dm.channel.id].append({"role": "user", "content": text})
+
+    # Ensure the conversation history doesn't exceed the maximum number of messages
+    conversations[dm.channel.id] = conversations[dm.channel.id][-MAX_HISTORY:]
+
+    thread = openai_client.beta.threads.create(
+        messages= [
+            {
+                "role": message["role"],
+                "content": message["content"]
+            }
+            for message in conversations[dm.channel.id]
+        ]
     )
-    # This creates a Run in a queued status. You can periodically retrieve the Run to check on its status to see if it has moved to completed.
+
+
     run = openai_client.beta.threads.runs.create(
         thread_id=thread.id,
         assistant_id=ASSISTANT_ID,
     )
 
-    # Peridically check the status of the run until it is completed
-    while run.status != "completed":
-        run = openai_client.beta.threads.runs.retrieve(
-            run_id=run.id,
-            thread_id=thread.id,
+    # Show "typing..." status while fetching response
+    async with dm.channel.typing():
+        while run.status != "completed":
+            run = openai_client.beta.threads.runs.retrieve(
+                run_id=run.id,
+                thread_id=thread.id,
+            )
+
+        messages = openai_client.beta.threads.messages.list(
+            thread_id=thread.id
         )
-    
-    
-    # Retrieve the assistant message from the completed run.
-    messages = openai_client.beta.threads.messages.list(
-        thread_id=thread.id
-    )
-    print(messages.data[0])
-    # SyncCursorPage[ThreadMessage](data=[ThreadMessage(id='msg_NdaZuRQ9V0bEoLXOJ6EbsCRc', assistant_id='asst_DOhy7RappORVrBLMAZz6Ly5A', content=[MessageContentText(text=Text(annotations=[], value='Guten Tag! Wie kann ich Ihnen heute im Bereich des Qualitätsmanagements behilflich sein?'), type='text')], created_at=1699519540, file_ids=[], metadata={}, object='thread.message', role='assistant', run_id='run_Eetxj4sM6BxgvztoJQM3y7FG', thread_id='thread_D0GrpmaCAU64NMQ5zHk9JAQ1'), ThreadMessage(id='msg_YoRprkXrZQDyTnTVR9kGHt1R', assistant_id=None, content=[MessageContentText(text=Text(annotations=[], value='Hallo'), type='text')], created_at=1699519538, file_ids=[], metadata={}, object='thread.message', role='user', run_id=None, thread_id='thread_D0GrpmaCAU64NMQ5zHk9JAQ1')], object='list', first_id='msg_NdaZuRQ9V0bEoLXOJ6EbsCRc', last_id='msg_YoRprkXrZQDyTnTVR9kGHt1R', has_more=False)
-    message = messages.data[0]
-    # Extract the message content
-    message_content = message.content[0].text
-    annotations = message_content.annotations
-    citations = []  
 
-    # Iterate over the annotations and add footnotes
-    for index, annotation in enumerate(annotations):
-        # Replace the text with a footnote
-        message_content.value = message_content.value.replace(annotation.text, f' [{index}]')
-        
-        # Gather citations based on annotation attributes
-        if (file_citation := getattr(annotation, 'file_citation', None)):
-            cited_file = openai_client.files.retrieve(file_citation.file_id)
-            citations.append(f'[{index}] {file_citation.quote} from {cited_file.filename}')
-        elif (file_path := getattr(annotation, 'file_path', None)):
-            cited_file = openai_client.files.retrieve(file_path.file_id)
-            citations.append(f'[{index}] Click <here> to download {cited_file.filename}')
-            # Note: File download functionality not implemented above for brevity
+        message = messages.data[0]
+        message_content = message.content[0].text
+        annotations = message_content.annotations
+        citations = []
 
-    # Add footnotes to the end of the message before displaying to user
-    message_content.value += '\n' + '\n'.join(citations)
+        # Iterate over the annotations and add footnotes
+        for index, annotation in enumerate(annotations):
+            # Replace the text with a footnote
+            message_content.value = message_content.value.replace(annotation.text, f' [{index}]')
 
-    await dm.channel.send(message_content.value)
+            # Gather citations based on annotation attributes
+            if (file_citation := getattr(annotation, 'file_citation', None)):
+                cited_file = openai_client.files.retrieve(file_citation.file_id)
+                citations.append(f'> Zitat: "{file_citation.quote}"\n> Quelle: {cited_file.filename}')
+            # elif (file_path := getattr(annotation, 'file_path', None)):
+                # cited_file = openai_client.files.retrieve(file_path.file_id)
+                # citations.append(f'> Download: [Link]({cited_file.filename})\n')
+                # Note: File download functionality not implemented above for brevity
 
+        # Store the citations for this channel
+        citations_dict[dm.channel.id] = citations
+
+        # Add the assistant's response to the conversation history
+        # conversations[dm.channel.id].append({"role": "assistant", "content": message_content.value})
+
+        await send(dm, message_content.value)
 
 # Run the bot by passing the discord token into the function
 client.run(DISCORD_TOKEN)
