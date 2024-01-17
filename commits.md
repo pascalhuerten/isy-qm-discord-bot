@@ -231,3 +231,7 @@
 ## Refactor commit message formatting
 
 > Version: [572f5db-20240113](https://github.com/pascalhuerten/isy-qm-discord-bot/commit/572f5dbf1e01b428c64eaf938befaebfe762a3da)
+
+## Add Docker compose and fix discord max message length bug
+
+> Version: [909f622-20240117](https://github.com/pascalhuerten/isy-qm-discord-bot/commit/909f622a7cd7c53615630e1a30fcd74412a38aa4)
